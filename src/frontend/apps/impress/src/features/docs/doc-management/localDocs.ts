@@ -51,6 +51,31 @@ const drop = (docId: string) =>
   ]);
 
 /**
+ * Remove a document's local copy and its last-opened index entry.
+ *
+ * Uses `drop`, which times out if the document database is still open, such as
+ * in another tab. If deletion fails, leave the index entry so a later attempt
+ * can retry. Call after stopping this tab's persistence provider.
+ */
+export const forgetLocalDoc = async (docId: string) => {
+  try {
+    await drop(docId);
+
+    const db = await openIndex();
+    try {
+      await db.delete(INDEX_STORE, docId);
+    } finally {
+      db.close();
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Failed to forget the local copy of a document', docId, error);
+    return false;
+  }
+};
+
+/**
  * Record that a document has just been opened, which is what keeps its local
  * copy alive.
  *

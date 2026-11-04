@@ -4,6 +4,8 @@ import { APIError, errorCauses, fetchAPI } from '@/api';
 
 import { Doc } from '../types';
 
+import { forgetLocalDoc } from '../localDocs';  
+
 export type DocParams = {
   id: string;
 };
@@ -12,6 +14,9 @@ export const getDoc = async ({ id }: DocParams): Promise<Doc> => {
   const response = await fetchAPI(`documents/${id}/`);
 
   if (!response.ok) {
+    if (response.status == 403) {
+      await forgetLocalDoc(id);
+    }
     throw new APIError('Failed to get the doc', await errorCauses(response));
   }
 
